@@ -1,23 +1,29 @@
 package com.example.himanshu.ambula;
 
 import android.Manifest;
+
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
+
 import androidx.fragment.app.FragmentActivity;
+
+
 import android.os.Bundle;
 
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import android.util.Log;
-import android.view.DragEvent;
-import android.view.MotionEvent;
+
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -32,19 +38,25 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 
 
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,View.OnTouchListener ,View.OnDragListener {
+import java.io.IOException;
+import java.util.List;
+
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnCameraMoveListener,GoogleMap.OnCameraMoveStartedListener,GoogleMap.OnCameraMoveCanceledListener,GoogleMap.OnCameraIdleListener {
 
     private GoogleMap mMap;
+    TextView tvLocationName;
     FusedLocationProviderClient fusedLocationProviderClient;
     ImageButton imageCurrentLocation;
     GoogleApiClient googleApiClient;
     androidx.appcompat.widget.Toolbar toolbar;
     LocationRequest locationRequest;
-    View view;
+CircleOptions circleOptions;
     MapFragment mapFragment;
     public static final String TAG = "MYCAM";
     String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -57,9 +69,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         imageCurrentLocation = findViewById(R.id.imageCurrentLocation);
         ActivityCompat.requestPermissions(MapsActivity.this, permissions, REQUEST_CODE);
 
+        tvLocationName=findViewById(R.id.tvLocationName);
 
-      view=findViewById(R.id.map);
-
+        getPlaceName(28.6967,77.2058);
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -70,19 +82,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         getFragmentManager().beginTransaction().replace(R.id.map,mapFragment)
                 .commit();
        mapFragment.getMapAsync(this);
-//       MapView   mapView=findViewById(R.id.mapView);
-//       mapView.onCreate(savedInstanceState);
-//        mapView.setOnDragListener(new View.OnDragListener() {
-//            @Override
-//            public boolean onDrag(View v, DragEvent event) {
-//                mMap.getCameraPosition();
-//                return false;
-//            }
-//        });
-//        mapView.getMapAsync(this);
+
         toolbar=findViewById(R.id.toolbar);
 
-DrawerLayout drawerLayout=findViewById(R.id.drawer_layout);
+ DrawerLayout drawerLayout=findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle=new ActionBarDrawerToggle(this,drawerLayout,toolbar,R.string.drawer_open,R.string.drawer_close);
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
@@ -98,28 +101,29 @@ DrawerLayout drawerLayout=findViewById(R.id.drawer_layout);
         });
 
 
-         view.setOnTouchListener(this);
-         view.setOnDragListener(this);
+
 
 
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 //   mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setAllGesturesEnabled(true);
 //   mMap.get
+
+
+//        mMap.setOnCameraMoveStartedListener(this);
+//        mMap.setOnCameraMoveCanceledListener(this);
+
+        mMap.setOnCameraIdleListener(this);
+        mMap.setOnCameraMoveStartedListener(this);
+
+
+
+
+
 
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(12.9716, 77.5946);
@@ -191,6 +195,11 @@ DrawerLayout drawerLayout=findViewById(R.id.drawer_layout);
                                             Log.d(TAG, "onSuccess: " + location.getLatitude());
                                             LatLng currentLatLng=new LatLng(location.getLatitude(),location.getLongitude());
                                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16));
+//                                            mMap.addCircle(new CircleOptions().
+//                                                    center(currentLatLng).radius(20).
+//                                                    fillColor(R.color.colorPrimary).
+//                                                    strokeColor(Color.rgb(255,255,255)).
+//                                                    strokeWidth(2));
                                             Log.d(TAG, "onSuccess: "+mMap.getCameraPosition());
                                         }
                                     }
@@ -207,7 +216,7 @@ DrawerLayout drawerLayout=findViewById(R.id.drawer_layout);
                 .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
                     @Override
                     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+                        Toast.makeText(MapsActivity.this, "Location is not on", Toast.LENGTH_SHORT).show();
                     }
                 }).addApi(LocationServices.API)
                 .build();
@@ -216,22 +225,64 @@ DrawerLayout drawerLayout=findViewById(R.id.drawer_layout);
     }
 
 
+
+
+
+
+
     @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        Toast.makeText(this, "Yes you are touched", Toast.LENGTH_SHORT).show();
-        Log.d("IMT", "onTouch: "+"Hey I am touched and here is my camera position     "+mMap.getCameraPosition());
-        return false;
+    public void onCameraMove() {
+//        Toast.makeText(this, ""+mMap.getCameraPosition(), Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "onCameraMove: "+mMap.getCameraPosition());
+    }
+
+
+    @Override
+    public void onCameraMoveStarted(int i) {
+        Toast.makeText(this,    "I am started ", Toast.LENGTH_SHORT).show();
+//        circleOptions=new CircleOptions();
+
+
+//        mMap.addCircle(circleOptions.center(new LatLng(28.6967,77.2058))
+//                      .radius(10)
+//        .fillColor(R.color.colorPrimary)
+//        .visible(true)
+//        );
+//        mMap.setOnCircleClickListener(new GoogleMap.OnCircleClickListener() {
+//            @Override
+//            public void onCircleClick(Circle circle) {
+//                circle.remove();
+//            }
+//        });
     }
 
     @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-
+    public void onCameraMoveCanceled() {
+        Toast.makeText(this, "I am cancelled", Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public boolean onDrag(View v, DragEvent event) {
-        Toast.makeText(this, "Yes you are dragged ,I know", Toast.LENGTH_SHORT).show();
-        Log.d("IMT", "onDrag: ");
-        return false;
+    public void onCameraIdle() {
+
+        Log.d("OCI", "onCameraIdle: "+mMap.getCameraPosition().target);
+
+       tvLocationName.setText(getPlaceName(mMap.getCameraPosition().target.latitude,mMap.getCameraPosition().target.longitude));
+
+    }
+
+
+
+    public String getPlaceName(double latitude,double longitude)
+    {  Address address=null;
+        Geocoder geocoder=new Geocoder(this);
+        try {
+            List<Address>  addresses=geocoder.getFromLocation(latitude,longitude,1);
+            address = addresses.get(0);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return address.getAddressLine(0);
     }
 }

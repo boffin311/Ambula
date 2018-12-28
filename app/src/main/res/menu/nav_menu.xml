@@ -5,6 +5,7 @@
     <item android:title="Account"
         android:orderInCategory="100"
         android:id="@+id/nav_account"
+        android:icon="@drawable/ic_account_circle"
         />
 </group>
 
