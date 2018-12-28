@@ -2,6 +2,7 @@ package com.example.himanshu.ambula;
 
 import android.Manifest;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -27,10 +28,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -42,12 +47,15 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import java.io.IOException;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnCameraMoveListener,GoogleMap.OnCameraMoveStartedListener,GoogleMap.OnCameraMoveCanceledListener,GoogleMap.OnCameraIdleListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,GoogleMap.OnCameraMoveListener
+        ,GoogleMap.OnCameraMoveStartedListener,GoogleMap.OnCameraMoveCanceledListener,
+        GoogleMap.OnCameraIdleListener,View.OnClickListener {
 
     private GoogleMap mMap;
     TextView tvLocationName;
@@ -61,6 +69,7 @@ CircleOptions circleOptions;
     public static final String TAG = "MYCAM";
     String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
     private int REQUEST_CODE = 12345;
+    private static final int PLACE_SEARCH_REQUEST_CODE=54321;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,12 +102,10 @@ CircleOptions circleOptions;
 
 
         /**when currentLocation button is clicked*/
-        imageCurrentLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getGoogleServiceLocation();
-            }
-        });
+        imageCurrentLocation.setOnClickListener(this);
+           tvLocationName.setOnClickListener(this);
+
+
 
 
 
@@ -284,5 +291,52 @@ CircleOptions circleOptions;
             e.printStackTrace();
         }
         return address.getAddressLine(0);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId())
+        {
+            case R.id.imageCurrentLocation:
+                Toast.makeText(this, "Inside onCLick", Toast.LENGTH_SHORT).show();
+
+                getGoogleServiceLocation();break;
+            case R.id.tvLocationName:
+                try {
+                    Intent intent=new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_FULLSCREEN)
+                            .build(this);
+
+                   this.startActivityForResult(intent,PLACE_SEARCH_REQUEST_CODE);
+                } catch (GooglePlayServicesRepairableException e) {
+                    e.printStackTrace();
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    e.printStackTrace();
+                }
+
+
+        }
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode==RESULT_OK)
+        {
+
+            if (requestCode==PLACE_SEARCH_REQUEST_CODE)
+            {
+                Place place=PlaceAutocomplete.getPlace(this,data);
+                tvLocationName.setText(place.getAddress());
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(),16));
+
+            }
+        }
+        else
+        {
+
+        }
     }
 }

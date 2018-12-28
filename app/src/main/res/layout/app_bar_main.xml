@@ -10,9 +10,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MapsActivity"
     android:layout_height="match_parent"/>
-    <!--<com.google.android.gms.maps.MapView-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:id="@+id/mapView"-->
-        <!--android:layout_height="match_parent"></com.google.android.gms.maps.MapView>-->
+
+
     <include layout="@layout/container_front_layout"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
