@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Ambula</string>
+    <string name="title_activity_maps">Ambula</string>
+    <string name="content_description">The image of the user who have logged in the particular id</string>
+    <string name="drawer_open">open drawer</string>
+    <string name="drawer_close">close drawer</string>
+</resources>
