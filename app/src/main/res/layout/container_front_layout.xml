@@ -44,7 +44,7 @@
             android:id="@+id/tvLocationName"
             android:nestedScrollingEnabled="true"
             android:padding="12dp"
-            android:text="G-17, M.C.D colony Dhaka Near kings way camp heere is theo ony" />
+            android:hint="Your current location" />
     </LinearLayout>
 </LinearLayout>
 

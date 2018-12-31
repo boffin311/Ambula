@@ -4,4 +4,5 @@
     <string name="content_description">The image of the user who have logged in the particular id</string>
     <string name="drawer_open">open drawer</string>
     <string name="drawer_close">close drawer</string>
+    <string name="gpd_on_request">Please allow Ambula to access your location for \n accurate pickup position</string>
 </resources>
